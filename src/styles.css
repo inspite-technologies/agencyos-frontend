@@ -1,0 +1,164 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* T Theme (Dark / Agency) */
+  --t-bg: #080808;
+  --t-s1: #111111;
+  --t-s2: #1A1A1A;
+  --t-s3: #222222;
+  --t-br: #2A2A2A;
+  --t-brL: #333333;
+  --t-lime: #FFFFFF;
+  --t-limeD: #1A1A1A;
+  --t-limeS: rgba(255, 255, 255, .08);
+  --t-cyan: #D4D4D4;
+  --t-cyanD: #1A1A1A;
+  --t-cyanS: rgba(255, 255, 255, .06);
+  --t-amber: #ABABAB;
+  --t-amberD: #1A1A1A;
+  --t-rose: #FF6B6B;
+  --t-roseD: #2A1A1A;
+  --t-violet: #888888;
+  --t-violetD: #1A1A1A;
+  --t-t0: #F5F5F5;
+  --t-t1: #888888;
+  --t-t2: #555555;
+  --t-t3: #222222;
+
+  /* CP Theme (Light / Client) */
+  --cp-bg: #F8F8F8;
+  --cp-s1: #FFFFFF;
+  --cp-s2: #F2F2F2;
+  --cp-s3: #E8E8E8;
+  --cp-br: #E0E0E0;
+  --cp-brL: #CCCCCC;
+  --cp-acc: #111111;
+  --cp-accS: rgba(0, 0, 0, .05);
+  --cp-accL: #E8E8E8;
+  --cp-ink: #111111;
+  --cp-t1: #555555;
+  --cp-t2: #999999;
+  --cp-t3: #CCCCCC;
+  --cp-green: #111111;
+  --cp-greenL: #E8E8E8;
+  --cp-amber: #555555;
+  --cp-amberL: #F0F0F0;
+  --cp-red: #CC3333;
+  --cp-redL: #F5E8E8;
+  --cp-teal: #333333;
+  --cp-tealL: #E8E8E8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--t-bg);
+  color: var(--t-t0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin .7s linear infinite;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+}
+
+button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  outline: none;
+}
+
+button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+.client-mode ::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+}
+
+/* App Loading Styles */
+.app-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080808;
+  z-index: 10000;
+  color: #fff;
+}
+
+.loader-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+}
+
+.loader-content .logo {
+  font-size: 32px;
+  font-weight: 800;
+  z-index: 2;
+  animation: pulse-logo 2s ease-in-out infinite;
+}
+
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes pulse-logo {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
