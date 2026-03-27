@@ -72,7 +72,9 @@ export interface Task {
 })
 export class AgencyService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:3000/api';
+  private readonly API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000/api'
+    : 'https://agencyos-backend-cqwy.onrender.com/api';
 
   // State Signals
   private readonly _users = signal<User[]>([]);
