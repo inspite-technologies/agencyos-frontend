@@ -1,12 +1,13 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AgencyService, Task, User } from '../../services/agency.service';
+import { NotificationCenter } from '../shared/notification-center';
 
 @Component({
   selector: 'app-task-board',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NotificationCenter],
   template: `
     <div class="task-board-view">
       <header class="view-header">
@@ -15,6 +16,7 @@ import { AgencyService, Task, User } from '../../services/agency.service';
           <p>{{ filteredTasks().length }} active tasks across all clients</p>
         </div>
         <div class="header-actions">
+           <app-notification-center />
            <input type="text" class="search-input" placeholder="Search tasks or clients..." [ngModel]="taskSearch()" (ngModelChange)="taskSearch.set($event)">
            
            <select class="filter-select" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
@@ -39,7 +41,7 @@ import { AgencyService, Task, User } from '../../services/agency.service';
       <div class="task-list">
         @for (task of filteredTasks(); track task.id) {
           <div class="task-card-wrapper">
-            <div class="task-card" [class.overdue]="isOverdue(task)" (click)="toggleExpand(task.id)">
+            <div class="task-card" [class.overdue]="isOverdue(task)" [attr.data-task-id]="task.id" (click)="toggleExpand(task.id)">
               <div class="task-info">
                 <div class="task-title">{{ task.title }}</div>
                 <div class="task-meta">
@@ -158,8 +160,8 @@ import { AgencyService, Task, User } from '../../services/agency.service';
                     </div>
                   }
                   <div class="st-add">
-                    <input type="text" #stInput placeholder="Add a step..." (keydown.enter)="addSubtaskToNew(stInput)">
-                    <button (click)="addSubtaskToNew(stInput)">Add</button>
+                    <input type="text" #stInput placeholder="Add a step..." (keydown.enter)="$event.preventDefault(); addSubtaskToNew(stInput)">
+                    <button (click)="$event.preventDefault(); addSubtaskToNew(stInput)">Add</button>
                   </div>
                 </div>
               </div>
@@ -207,7 +209,7 @@ import { AgencyService, Task, User } from '../../services/agency.service';
   `,
   styles: [`
     .task-board-view { display: flex; flex-direction: column; }
-    .view-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+    .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
     h1 { font-weight: 800; font-size: 24px; }
     .view-header p { color: var(--t-t1); font-size: 13px; margin-top: 2px; }
 
@@ -329,6 +331,27 @@ import { AgencyService, Task, User } from '../../services/agency.service';
 })
 export class TaskBoard {
   agencyService = inject(AgencyService);
+
+  constructor() {
+    effect(() => {
+      const id = this.agencyService.selectedTaskId();
+      if (id) {
+        this.expandedTasks.update(prev => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+        setTimeout(() => {
+          const el = document.querySelector(`[data-task-id="${id}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (el) (el as HTMLElement).style.boxShadow = '0 0 0 2px var(--t-cyan)';
+          
+          // Clear signal so it can be re-triggered for the same task
+          this.agencyService.setSelectedTask(null);
+        }, 100);
+      }
+    });
+  }
 
   taskSearch = signal('');
   filterPriority = signal('All');

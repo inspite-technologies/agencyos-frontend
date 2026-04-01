@@ -2,11 +2,13 @@ import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AgencyService, User } from '../../services/agency.service';
+import { ToastService } from '../../services/toast.service';
+import { NotificationCenter } from '../shared/notification-center';
 
 @Component({
   selector: 'app-team-view',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NotificationCenter],
   template: `
     <div class="team-view">
       <header class="view-header">
@@ -14,7 +16,10 @@ import { AgencyService, User } from '../../services/agency.service';
           <h1>Team</h1>
           <p>{{ teamMembers().length }} members</p>
         </div>
-        <button class="action-btn" (click)="showAddModal.set(true)">+ Add Member</button>
+        <div class="header-actions">
+          <app-notification-center />
+          <button class="action-btn" (click)="showAddModal.set(true)">+ Add Member</button>
+        </div>
       </header>
 
       <div class="team-grid">
@@ -154,7 +159,8 @@ import { AgencyService, User } from '../../services/agency.service';
   `,
   styles: [`
     .team-view { display: flex; flex-direction: column; }
-    .view-header { margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .view-header { margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
     h1 { font-weight: 800; font-size: 24px; }
     .view-header p { color: var(--t-t1); font-size: 13px; margin-top: 2px; }
 
@@ -239,6 +245,7 @@ import { AgencyService, User } from '../../services/agency.service';
 })
 export class TeamView {
   agencyService = inject(AgencyService);
+  toastService = inject(ToastService);
 
   showAddModal = signal(false);
   selectedMember = signal<User | null>(null);
@@ -299,7 +306,7 @@ export class TeamView {
       this.newUser = { name: '', email: '', role: 'manager', title: '', password: '' };
     } catch (err: any) {
       const msg = err?.error?.error || err?.message || 'Failed to add member. Please try again.';
-      alert(msg);
+      this.toastService.error(msg);
     }
   }
 }

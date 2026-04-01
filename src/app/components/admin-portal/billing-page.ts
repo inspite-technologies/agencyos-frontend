@@ -1,16 +1,22 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AgencyService } from '../../services/agency.service';
+import { NotificationCenter } from '../shared/notification-center';
 
 @Component({
   selector: 'app-billing-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NotificationCenter],
   template: `
     <div class="billing-page">
       <header class="view-header">
-        <h1>Subscription</h1>
-        <p>Manage your AgencyOS plan</p>
+        <div>
+          <h1>Subscription</h1>
+          <p>Manage your AgencyOS plan</p>
+        </div>
+        <div class="header-actions">
+          <app-notification-center />
+        </div>
       </header>
 
       <div class="tiers-grid">
@@ -49,7 +55,8 @@ import { AgencyService } from '../../services/agency.service';
   `,
   styles: [`
     .billing-page { display: flex; flex-direction: column; }
-    .view-header { margin-bottom: 22px; }
+    .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
     h1 { font-weight: 800; font-size: 24px; }
     .view-header p { color: var(--t-t1); font-size: 13px; margin-top: 2px; }
 

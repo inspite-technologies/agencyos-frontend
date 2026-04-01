@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AgencyService, Client } from '../../services/agency.service';
 import { Sidebar } from '../shared/sidebar/sidebar';
+import { ReportsHub } from '../admin-portal/reports-hub';
 
 @Component({
   selector: 'CCard',
@@ -25,9 +26,90 @@ export class CCard {
 }
 
 @Component({
+  selector: 'TrendChart',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="chart-container">
+      <div class="chart-header">
+        <div class="chart-title">Performance Trend</div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="dot rev"></span> Revenue</div>
+          <div class="legend-item"><span class="dot spend"></span> Ad Spend</div>
+        </div>
+      </div>
+      
+      <svg viewBox="0 0 700 240" preserveAspectRatio="none" class="main-svg">
+        <!-- Gradients -->
+        <defs>
+          <linearGradient id="gradRev" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--cp-acc)" stop-opacity="0.15" />
+            <stop offset="100%" stop-color="var(--cp-acc)" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+
+        <!-- Grid Lines -->
+        <line x1="0" y1="60" x2="700" y2="60" stroke="#f1f5f9" stroke-width="1" />
+        <line x1="0" y1="120" x2="700" y2="120" stroke="#f1f5f9" stroke-width="1" />
+        <line x1="0" y1="180" x2="700" y2="180" stroke="#f1f5f9" stroke-width="1" />
+
+        <!-- Revenue Area & Line -->
+        <path [attr.d]="revAreaPath()" fill="url(#gradRev)" />
+        <path [attr.d]="revLinePath()" fill="none" stroke="var(--cp-acc)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+        <!-- Spend Line -->
+        <path [attr.d]="spnLinePath()" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round" />
+      </svg>
+      
+      <div class="x-axis">
+        @for (m of months(); track m) {
+          <span>{{ m }}</span>
+        }
+      </div>
+    </div>
+  `,
+  styles: [`
+    .chart-container { background: #fff; border: 1px solid var(--cp-br); border-radius: 20px; padding: 24px; margin-top: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .chart-title { font-size: 14px; font-weight: 800; color: #111; text-transform: uppercase; letter-spacing: 0.05em; }
+    .chart-legend { display: flex; gap: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--cp-t2); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.rev { background: var(--cp-acc); }
+    .dot.spend { background: #94a3b8; }
+    
+    .main-svg { width: 100%; height: 240px; overflow: visible; }
+    .x-axis { display: flex; justify-content: space-between; margin-top: 15px; padding: 0 10px; }
+    .x-axis span { font-size: 10px; font-weight: 700; color: var(--cp-t2); text-transform: uppercase; }
+  `]
+})
+export class TrendChart {
+  data = input<any[]>([]);
+  months = computed(() => this.data().map(d => d.month || '???'));
+
+  // Real dynamic SVG generation
+  revLinePath = computed(() => this.generatePath(this.data().map(d => d.revenue || 0), 240, 700));
+  revAreaPath = computed(() => this.revLinePath() + " L 700 240 L 0 240 Z");
+  spnLinePath = computed(() => this.generatePath(this.data().map(d => d.spend || 0), 240, 700));
+
+  private generatePath(values: number[], height: number, width: number): string {
+    if (values.length < 2) return `M 0 ${height} L ${width} ${height}`;
+
+    const max = Math.max(...values, 1000); // 1000 floor for scaling
+    const step = width / (values.length - 1);
+
+    return values.map((v, i) => {
+      const x = i * step;
+      const y = height - (v / max) * (height * 0.8) - (height * 0.1); // 10% padding
+      return (i === 0 ? 'M' : 'L') + ` ${x} ${y}`;
+    }).join(' ');
+  }
+}
+
+@Component({
   selector: 'app-client-portal',
   standalone: true,
-  imports: [CommonModule, Sidebar, CCard],
+  imports: [CommonModule, Sidebar, CCard, TrendChart, ReportsHub],
   template: `
     <div class="client-portal">
       <app-sidebar 
@@ -40,19 +122,49 @@ export class CCard {
         @if (page() === 'overview') {
           <div class="view-container">
             <header class="view-header">
-              <div class="client-badge">{{ client()?.industry || 'Client' }} Dashboard</div>
-              <h1>{{ client()?.name || 'Horizon Realty' }}</h1>
-              <div class="header-meta">
-                <span class="welcome">Welcome back 👋</span>
-                <span class="dot">·</span>
-                <span class="date">{{ today }}</span>
+              <div class="header-main">
+                <div>
+                  <div class="client-badge">{{ client()?.industry || 'Client' }} Dashboard</div>
+                  <h1>{{ client()?.name || 'Horizon Realty' }}</h1>
+                  <div class="header-meta">
+                    <span class="welcome">Welcome back 👋</span>
+                    <span class="dot">·</span>
+                    <span class="date">{{ today }}</span>
+                  </div>
+                </div>
+                
+                @if (manager()) {
+                  <div class="manager-mini-card">
+                    <div class="manager-avatar">{{ manager()?.avatar }}</div>
+                    <div class="manager-info">
+                      <span class="m-label">Account Manager</span>
+                      <span class="m-name">{{ manager()?.name }}</span>
+                    </div>
+                  </div>
+                }
               </div>
             </header>
+
+            <div class="top-row-grid">
+              <div class="card pacing-card">
+                <div class="pacing-header">
+                  <span class="p-label">Monthly Budget Pacing</span>
+                  <span class="p-val">{{ pacingPercent() }}%</span>
+                </div>
+                <div class="pacing-bar-bg">
+                  <div class="pacing-bar" [style.width.%]="pacingPercent()"></div>
+                </div>
+                <div class="pacing-footer">
+                  Spent <strong>{{ (client()?.spend || 0) | currency:'INR':'symbol':'1.0-0' }}</strong> 
+                  of <strong>{{ (client()?.budget || 0) | currency:'INR':'symbol':'1.0-0' }}</strong> target
+                </div>
+              </div>
+            </div>
 
             <div class="stats-grid">
               <div class="stat-card">
                 <div class="stat-label">Ad Spend</div>
-                <div class="stat-value">{{ (client()?.spend || 0) | currency:'USD':'symbol':'1.0-0' }}</div>
+                <div class="stat-value">{{ (client()?.spend || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
                 <div class="stat-delta" [class.down]="getDelta('spend') < 0">
                   {{ getDelta('spend') > 0 ? '↑' : '↓' }} {{ Math.abs(getDelta('spend')) }}% vs last month
                 </div>
@@ -66,7 +178,7 @@ export class CCard {
               </div>
               <div class="stat-card">
                 <div class="stat-label">Revenue</div>
-                <div class="stat-value">{{ (client()?.revenue || 0) | currency:'USD':'symbol':'1.0-0' }}</div>
+                <div class="stat-value">{{ (client()?.revenue || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
                 <div class="stat-delta" [class.down]="getDelta('revenue') < 0">
                   {{ getDelta('revenue') > 0 ? '↑' : '↓' }} {{ Math.abs(getDelta('revenue')) }}% vs last month
                 </div>
@@ -77,7 +189,8 @@ export class CCard {
                 <div class="stat-sub">return on ad spend</div>
               </div>
             </div>
-
+            
+            <TrendChart [data]="client()?.monthlyData || []" />
           </div>
         }
 
@@ -194,71 +307,7 @@ export class CCard {
         }
 
         @if (page() === 'report') {
-          <div class="view-container">
-            <header class="view-header">
-              <h1>Monthly Report</h1>
-              <p>Generated by your agency</p>
-            </header>
-
-            <div class="report-canvas">
-              <div class="report-hero">
-                <div class="report-meta">MONTHLY PERFORMANCE REPORT</div>
-                <h1 class="report-title">{{ client()?.name || 'Client' }}</h1>
-                <p class="report-subtitle">June 2025 · Managed by your agency</p>
-                <div class="report-summary-grid">
-                  <div class="report-summary-box"><strong>{{ (client()?.spend || 0) | currency:'INR':'symbol':'1.0-0' }}</strong><span>Ad Spend</span></div>
-                  <div class="report-summary-box"><strong>{{ client()?.leads || 0 }}</strong><span>Total Leads</span></div>
-                  <div class="report-summary-box"><strong>{{ (client()?.revenue || 0) | currency:'INR':'symbol':'1.0-0' }}</strong><span>Revenue</span></div>
-                  <div class="report-summary-box"><strong>{{ client()?.roas || 0 }}×</strong><span>ROAS</span></div>
-                </div>
-              </div>
-
-              <div class="report-section">
-                <h3 class="section-title">Month-on-Month</h3>
-                <div class="mom-grid">
-                  <div class="mom-card">
-                    <div class="mom-val">{{ (client()?.spend || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
-                    <div class="mom-lbl">Spend</div>
-                    <div class="mom-delta up">↑ 2.8%</div>
-                  </div>
-                  <div class="mom-card">
-                    <div class="mom-val">{{ client()?.leads || 0 }}</div>
-                    <div class="mom-lbl">Leads</div>
-                    <div class="mom-delta up">↑ 4.4%</div>
-                  </div>
-                  <div class="mom-card">
-                    <div class="mom-val">{{ (client()?.revenue || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
-                    <div class="mom-lbl">Revenue</div>
-                    <div class="mom-delta up">↑ 5.9%</div>
-                  </div>
-                  <div class="mom-card">
-                    <div class="mom-val">{{ client()?.roas || 0 }}×</div>
-                    <div class="mom-lbl">ROAS</div>
-                    <div class="mom-delta up">↑ 2.4%</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid-2 mt-20">
-                <div class="report-card-light">
-                  <h3 class="section-title">🏆 Key Wins</h3>
-                  <ul class="bullet-list">
-                    <li><span class="check">✓</span> Best-ever ROAS this month</li>
-                    <li><span class="check">✓</span> Leads increased month-on-month</li>
-                    <li><span class="check">✓</span> Campaign cost-per-lead improved</li>
-                  </ul>
-                </div>
-                <div class="report-card-light">
-                  <h3 class="section-title">🚀 Next Month</h3>
-                  <ul class="bullet-list">
-                    <li><span class="arrow">→</span> Scale top-performing campaigns</li>
-                    <li><span class="arrow">→</span> Test new creative formats</li>
-                    <li><span class="arrow">→</span> Expand keyword coverage</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
+          <app-reports-hub />
         }
 
         @if (page() === 'invoices') {
@@ -271,28 +320,43 @@ export class CCard {
             <div class="stats-grid">
               <div class="stat-card">
                 <div class="stat-label">Total Billed</div>
-                <div class="stat-value">$25,500</div>
+                <div class="stat-value">{{ totalBilled() | currency:'INR':'symbol':'1.0-0' }}</div>
                 <div class="stat-sub">all time</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">Amount Paid</div>
-                <div class="stat-value">$25,500</div>
+                <div class="stat-value">{{ totalPaid() | currency:'INR':'symbol':'1.0-0' }}</div>
                 <div class="stat-sub">all cleared</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">Outstanding</div>
-                <div class="stat-value accent">$0</div>
-                <div class="stat-sub">nothing due</div>
+                <div class="stat-value accent">{{ outstanding() | currency:'INR':'symbol':'1.0-0' }}</div>
+                <div class="stat-sub">{{ outstanding() > 0 ? 'payment due' : 'nothing due' }}</div>
               </div>
             </div>
 
             <div class="card">
               <table class="cp-table">
-                <thead><tr><th>Invoice</th><th>Period</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+                <thead><tr><th>Invoice #</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
-                  <tr><td class="bold">INV-001</td><td>June 2025</td><td>2025-06-01</td><td class="bold">$8,500</td><td><span class="paid-badge">Paid</span></td></tr>
-                  <tr><td class="bold">INV-002</td><td>May 2025</td><td>2025-05-01</td><td class="bold">$8,500</td><td><span class="paid-badge">Paid</span></td></tr>
-                  <tr><td class="bold">INV-003</td><td>April 2025</td><td>2025-04-01</td><td class="bold">$8,500</td><td><span class="paid-badge">Paid</span></td></tr>
+                  @for (inv of clientInvoices(); track inv.id) {
+                    <tr>
+                      <td class="bold">{{ inv.invoiceNumber }}</td>
+                      <td>{{ inv.dueDate | date:'mediumDate' }}</td>
+                      <td class="bold">{{ inv.total | currency:'INR':'symbol':'1.0-0' }}</td>
+                      <td>
+                        <span [class]="inv.status === 'Paid' ? 'paid-badge' : 'unpaid-badge'">
+                          {{ inv.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="download-btn" (click)="agencyService.downloadInvoice(inv)">Download PDF</button>
+                      </td>
+                    </tr>
+                  }
+                  @if (clientInvoices().length === 0) {
+                    <tr><td colspan="5" style="text-align: center; color: var(--cp-t2); padding: 40px; font-style: italic;">No billing history available yet.</td></tr>
+                  }
                 </tbody>
               </table>
             </div>
@@ -371,6 +435,27 @@ export class CCard {
     .report-card-light { background: #F9FAFB; border: 1px solid var(--cp-br); border-radius: 16px; padding: 24px; }
     .mt-20 { margin: 0 40px 40px; margin-top: -10px; }
     .paid-badge { background: #DCFCE7; color: #166534; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; }
+    .unpaid-badge { background: #FEF3F2; color: #B91C1C; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; }
+    .download-btn { background: var(--cp-acc); color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+    .download-btn:hover { opacity: 0.9; }
+
+    /* Account Details UI */
+    .header-main { display: flex; justify-content: space-between; align-items: flex-end; }
+    .manager-mini-card { display: flex; align-items: center; gap: 12px; background: #fff; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--cp-br); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .manager-avatar { width: 36px; height: 36px; background: var(--cp-acc); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+    .manager-info { display: flex; flex-direction: column; }
+    .m-label { font-size: 9px; font-weight: 700; color: var(--cp-t2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .m-name { font-size: 13px; font-weight: 800; color: var(--cp-ink); }
+
+    .top-row-grid { margin-bottom: 24px; }
+    .pacing-card { padding: 20px 24px; }
+    .pacing-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+    .p-label { font-size: 11px; font-weight: 800; color: var(--cp-ink); text-transform: uppercase; letter-spacing: 0.05em; }
+    .p-val { font-size: 14px; font-weight: 900; color: var(--cp-acc); }
+    .pacing-bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+    .pacing-bar { height: 100%; background: linear-gradient(90deg, var(--cp-acc), #7C3AED); border-radius: 4px; transition: width 0.6s ease-out; }
+    .pacing-footer { font-size: 12px; color: var(--cp-t2); }
+    .pacing-footer strong { color: var(--cp-ink); }
   `]
 })
 export class ClientPortal {
@@ -383,6 +468,27 @@ export class ClientPortal {
     const user = this.agencyService.currentUser();
     if (!user || user.role !== 'client') return null;
     return this.agencyService.clients().find(c => c.id === user.clientId) || null;
+  });
+
+  clientInvoices = computed(() => {
+    const c = this.client();
+    if (!c) return [];
+    return this.agencyService.invoices().filter(i => i.clientId === c.id);
+  });
+
+  totalBilled = computed(() => this.clientInvoices().reduce((s, i) => s + i.total, 0));
+  totalPaid = computed(() => this.clientInvoices().filter(i => i.status === 'Paid').reduce((s, i) => s + i.total, 0));
+  outstanding = computed(() => this.totalBilled() - this.totalPaid());
+  
+  manager = computed(() => {
+    const cid = this.client()?.managerId;
+    return this.agencyService.users().find(u => u.id === cid) || null;
+  });
+
+  pacingPercent = computed(() => {
+    const c = this.client();
+    if (!c || !c.budget) return 0;
+    return Math.min(Math.round((c.spend / c.budget) * 100), 100);
   });
 
   getDelta(key: string): number {

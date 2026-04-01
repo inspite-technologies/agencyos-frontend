@@ -221,8 +221,8 @@ export class Login {
       } else {
         this.error.set('Invalid email or password.');
       }
-    } catch (err) {
-      this.error.set('An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      this.error.set(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
       this.loading.set(false);
     }

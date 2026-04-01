@@ -153,12 +153,13 @@ export class Sidebar {
         { id: 'clients', icon: '◉', label: 'My Clients', badge: 0 },
         { id: 'tasks', icon: '◻', label: 'Tasks', badge: this.agencyService.tasks().filter(t => t.assigneeId === this.user()?.id && t.status !== 'Done').length },
         { id: 'reports', icon: '☰', label: 'Reports', badge: 0 },
+        { id: 'invoices', icon: '$', label: 'Invoices', badge: 0 },
       ];
     }
     if (this.user()?.role === 'staff') {
       return [
         { id: 'tasks', icon: '◻', label: 'My Tasks', badge: this.agencyService.tasks().filter(t => t.assigneeId === this.user()?.id && t.status !== 'Done').length },
-        { id: 'kpi', icon: '◈', label: 'Enter KPIs', badge: 0 }
+        { id: 'kpi', icon: '◈', label: 'Clients', badge: 0 }
       ];
     }
     return [
@@ -167,7 +168,8 @@ export class Sidebar {
       { id: 'tasks', icon: '◻', label: 'All Tasks', badge: this.agencyService.tasks().filter(t => t.status !== 'Done').length },
       { id: 'team', icon: '◎', label: 'Team', badge: 0 },
       { id: 'reports', icon: '☰', label: 'Reports', badge: 0 },
-      { id: 'billing', icon: '$', label: 'Subscription', badge: 0 },
+      { id: 'invoices', icon: '$', label: 'Invoices', badge: 0 },
+      { id: 'billing', icon: '⬡', label: 'Subscription', badge: 0 },
     ];
   }
 }
