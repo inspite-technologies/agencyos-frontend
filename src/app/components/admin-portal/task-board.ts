@@ -250,6 +250,7 @@ import { NotificationCenter } from '../shared/notification-center';
       width: 110px; transition: all .2s;
     }
     .status-select:hover { border-color: var(--t-brL); background: var(--t-s2); color: #fff; }
+    .status-select option { background: var(--t-s3); color: #fff; }
     .status-select[data-status="In Progress"] { color: var(--t-cyan); background: rgba(0, 188, 212, 0.1); }
     .status-select[data-status="Done"] { color: var(--t-lime); background: rgba(26, 255, 178, 0.08); }
     .status-select[data-status="Blocked"] { color: var(--t-rose); background: rgba(255, 107, 107, 0.1); }

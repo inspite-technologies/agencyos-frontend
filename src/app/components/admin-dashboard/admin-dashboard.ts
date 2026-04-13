@@ -583,6 +583,7 @@ import { NotificationCenter } from '../shared/notification-center';
       padding: 4px 0; font-size: 9px; font-weight: 800; text-transform: uppercase; cursor: pointer; outline: none; appearance: none; text-align: center;
       width: 90px;
     }
+    .status-select-sm option { background: var(--t-s3); color: #fff; }
     .status-select-sm[data-status="Paid"] { color: var(--t-lime); background: rgba(26, 255, 178, 0.08); }
     .status-select-sm[data-status="Unpaid"] { color: var(--t-amber); background: rgba(255, 193, 7, 0.1); }
     .status-select-sm[data-status="Overdue"] { color: var(--t-rose); background: rgba(255, 107, 107, 0.1); }

@@ -848,6 +848,7 @@ import { NotificationCenter } from '../shared/notification-center';
       background-position: right 10px center;
     }
     .status-select:hover { border-color: var(--t-cyan); background-color: var(--t-s2); color: #fff; transform: translateY(-1px); }
+    .status-select option { background: var(--t-s3); color: #fff; }
     .status-select[data-status="In Progress"] { color: var(--t-cyan); background-color: rgba(0, 188, 212, 0.1); border-color: rgba(0, 188, 212, 0.2); }
     .status-select[data-status="Done"] { color: var(--t-lime); background-color: rgba(26, 255, 178, 0.08); border-color: rgba(26, 255, 178, 0.2); }
     .status-select[data-status="Blocked"] { color: var(--t-rose); background-color: rgba(255, 107, 107, 0.1); border-color: rgba(255, 107, 107, 0.2); }
